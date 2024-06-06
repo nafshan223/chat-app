@@ -4,15 +4,24 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import Logout from "./Logout";
 import ChatInputs from "./ChatInputs";
-import Messege from './Messege'
 import { recieveMessageRoute, sendMessageRoute } from "../utils/APIRoutes";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function ChatContainer({ currentChat,currentUser, socket }) {
   const [messages, setMessages] = useState([]);
   const scrollRef = useRef();
   const [arrivalMessage, setArrivalMessage] = useState(null);
-
+  const [notify,setNotify]= useState(new Date())
   
+
+
+  const toastOptions = {
+    position: "bottom-right",
+    autoClose: 8000,
+    pauseOnHover: true,
+    draggable: true,
+    theme: "blue",
+  };
   useEffect(() => {
     const fetchData = async () => {
       
@@ -41,6 +50,9 @@ export default function ChatContainer({ currentChat,currentUser, socket }) {
     fetchData();
   }, [currentChat]);
 
+  useEffect(()=>{
+    setInterval(() =>setNotify(new Date()), 1000);
+  },[])
   useEffect(() => {
     const getCurrentChat = async () => {
       if (currentChat) {
@@ -70,23 +82,30 @@ export default function ChatContainer({ currentChat,currentUser, socket }) {
       const msgs = [...messages];
     msgs.push({ fromSelf: true, message: msg });
     setMessages(msgs);
+    
    
   };
   useEffect(() => {
     if (socket.current) {
       socket.current.on("msg-recieve", (msg) => {
         setArrivalMessage({ fromSelf: false, message: msg });
+        
       });
     }
+    
   }, []);
-
+ 
   useEffect(() => {
     arrivalMessage && setMessages((prev) => [...prev, arrivalMessage]);
   }, [arrivalMessage]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);  return (
+  }, [messages]);  
+  const [currentTime, setCurrentTime] = useState(new Date().toISOString());
+
+ 
+  return (
     <>
     { currentChat && (
     <Container>
@@ -115,16 +134,20 @@ export default function ChatContainer({ currentChat,currentUser, socket }) {
                 }`}
               >
                 <div className="content ">
-                  <p>{message.message}</p>
+
+                  <div><p>{message.message}</p></div>
+                  
+                  
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-     
+
       <ChatInputs handleSendMsg={handleSendMsg} />
     </Container>
+    
     
     
   )
@@ -179,11 +202,14 @@ const Container = styled.div`
     }
     .message {
       display: flex;
+      
       align-items: center;
       .content {
         max-width: 40%;
         overflow-wrap: break-word;
         padding: 1rem;
+        display: flex;
+        
         font-size: 1.1rem;
         border-radius: 1rem;
         color: #d1d1d1;

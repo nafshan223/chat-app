@@ -83,7 +83,9 @@ import { loginRoute } from "../utils/APIRoutes";
             onChange={(e) => handleChange(e)}
           />
           <button type="submit">Log In</button>
+          <Link to="/forgot-password">Forgot Password</Link>
           <span>
+
             Don't have an account ? <Link to="/register">Create One.</Link>
           </span>
         </form>

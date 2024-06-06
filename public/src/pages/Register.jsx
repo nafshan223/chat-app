@@ -3,102 +3,124 @@ import axios from "axios";
 import styled from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import Logo from "../assets/logo.svg";
-import {toast,ToastContainer} from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
-import { registerRoute } from "../utils/APIRoutes";
-
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { registerRoute, sendverificationRoute } from "../utils/APIRoutes";
 
 function Register() {
-    const [values,setValues]=useState({
-        username:"",
-        email:"",
-        password:"",
-        confirmPassword:""
-    })
-    const navigate=useNavigate()
-    useEffect(() => {
-      if (localStorage.getItem("chat-app-user")) {
-        navigate("/");
-      }
-    }, []);
-    const toastOptions={
-      position:"bottom-right",
-      autoClose:"8000",
-      pauseOnHover:true,
-      draggable:true,
-      theme:"dark"
+  const [values, setValues] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (localStorage.getItem("chat-app-user")) {
+      navigate("/");
     }
-    const handleChange=(e)=>{
-        setValues({...values,[e.target.name]:e.target.value})
+  }, []);
+  const toastOptions = {
+    position: "bottom-right",
+    autoClose: "8000",
+    pauseOnHover: true,
+    draggable: true,
+    theme: "dark",
+  };
+  const handleChange = (e) => {
+    setValues({ ...values, [e.target.name]: e.target.value });
+  };
+  const validation = () => {
+    const {  username, email } = values;
+    if (username.length < 3) {
+      toast.error("username shoulde be more than 3 characters", toastOptions);
+      return false;
+    }  else if (email.length < 3) {
+      toast.error("email invalid", toastOptions);
+      return false;
+    }else if (email === "") {
+      toast.error("email is required", toastOptions);
+      return false;
     }
-    
-    const handleSubmit = async (event) => {
-      event.preventDefault();
+    return true;
+  };
 
+
+  const generateOtp = async (event) => {
+    event.preventDefault();
+    if(validation()){
       
-      if (handleValidation()) {
- 
-        const { email, username, password } = values;
-        const { data } = await axios.post(registerRoute, {
-          username,
-          email,
-          password,
-        });
-        
-  
-        if (data.status === false) {
-          toast.error(data.msg, toastOptions);
+    try {
+      const { email } = values;
+      const { data } = await axios.post(sendverificationRoute, { email });
+      console.log(data);
+      toast.success(data.message, toastOptions);
+    } catch (err) {
+      if (err.response) {
+        if (err.response.status === 409) {
+          toast.error('User with given email already exists!', toastOptions);
+        } else {
+          toast.error(err.response.data.message || 'An error occurred', toastOptions);
         }
-        if (data.status === true) {
-          localStorage.setItem(
-            "chat-app-user",
-            JSON.stringify(data.user)
-          );
-          navigate("/setAvatar");
-        }
+      } else {
+        toast.error('Network error. Please try again later.', toastOptions);
       }
-    };
-    const handleValidation =()=>
-    {
-       const {password,confirmPassword,username,email}  = values;
-       if(password!==confirmPassword)
-       {
-        toast.error("password and confirm password should be same.",toastOptions)
-        return false
-       }
-       else if(username.length<3)
-       {
-        toast.error("username shoulde be more than 3 characters",toastOptions)
-        return false
-       }
-       else if(email.length<3)
-       {
-        toast.error("email shoulde be more than 3 characters",toastOptions)
-        return false
-       }
-       else if(password.length<8)
-       {
-        toast.error("pass shoulde be more than 8  characters",toastOptions)
-        return false
-       }
-       
-       else if (email==="")
-       {
-          toast.error("email is required",toastOptions)
-          return false
-       }
-       return true
-       
-       
+    }
+  };
 
     }
+
+    
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (handleValidation()) {
+      const { email, username, password } = values;
+      const { data } = await axios.post(registerRoute, {
+        username,
+        email,
+        password,
+      });
+
+      if (data.status === false) {
+        toast.error(data.msg, toastOptions);
+      }
+      if (data.status === true) {
+        localStorage.setItem("chat-app-user", JSON.stringify(data.user));
+        navigate("/otp");
+      }
+    }
+  };
  
-    
-    
+  const handleValidation = () => {
+    const { password, confirmPassword, username, email } = values;
+    if (password !== confirmPassword) {
+      toast.error(
+        "password and confirm password should be same.",
+        toastOptions
+      );
+      return false;
+    } else if (username.length < 3) {
+      toast.error("username shoulde be more than 3 characters", toastOptions);
+      return false;
+    } else if (email.length < 3) {
+      toast.error("email shoulde be more than 3 characters", toastOptions);
+      return false;
+    } else if (password.length < 8) {
+      toast.error("pass shoulde be more than 8  characters", toastOptions);
+      return false;
+    } else if (email === "") {
+      toast.error("email is required", toastOptions);
+      return false;
+    }
+    return true;
+  };
+
   return (
     <>
-    <FormContainer>
-    <form action="" onSubmit={(event) => handleSubmit(event)}>
+      <FormContainer>
+        <form action="" onSubmit={(event) => handleSubmit(event)}>
           <div className="brand">
             <img src={Logo} alt="logo" />
             <h1>snappy</h1>
@@ -115,6 +137,8 @@ function Register() {
             name="email"
             onChange={(e) => handleChange(e)}
           />
+          <button onClick={generateOtp}>verify</button>
+
           <input
             type="password"
             placeholder="Password"
@@ -132,79 +156,78 @@ function Register() {
             Already have an account ? <Link to="/login">Login.</Link>
           </span>
         </form>
-
-    </FormContainer>
-    <ToastContainer/>
-        
+      </FormContainer>
+      <ToastContainer />
     </>
-  )
+  );
 }
-const FormContainer = styled.div`height: 100vh;
-width: 100vw;
-display: flex;
-flex-direction: column;
-justify-content: center;
-gap: 1rem;
-align-items: center;
-background-color: #131324;
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-  img {
-    height: 5rem;
-  }
-  h1 {
-    color: white;
-    text-transform: uppercase;
-  }
-}
-
-form {
+const FormContainer = styled.div`
+  height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  background-color: #00000076;
-  border-radius: 2rem;
-  padding: 3rem 5rem;
-}
-input {
-  background-color: transparent;
-  padding: 1rem;
-  border: 0.1rem solid #4e0eff;
-  border-radius: 0.4rem;
-  color: white;
-  width: 100%;
-  font-size: 1rem;
-  &:focus {
-    border: 0.1rem solid #997af0;
-    outline: none;
+  justify-content: center;
+  gap: 1rem;
+  align-items: center;
+  background-color: #131324;
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    img {
+      height: 5rem;
+    }
+    h1 {
+      color: white;
+      text-transform: uppercase;
+    }
   }
-}
-button {
-  background-color: #4e0eff;
-  color: white;
-  padding: 1rem 2rem;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 0.4rem;
-  font-size: 1rem;
-  text-transform: uppercase;
-  &:hover {
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    background-color: #00000076;
+    border-radius: 2rem;
+    padding: 3rem 5rem;
+  }
+  input {
+    background-color: transparent;
+    padding: 1rem;
+    border: 0.1rem solid #4e0eff;
+    border-radius: 0.4rem;
+    color: white;
+    width: 100%;
+    font-size: 1rem;
+    &:focus {
+      border: 0.1rem solid #997af0;
+      outline: none;
+    }
+  }
+  button {
     background-color: #4e0eff;
-  }
-}
-span {
-  color: white;
-  text-transform: uppercase;
-  a {
-    color: #4e0eff;
-    text-decoration: none;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
     font-weight: bold;
+    cursor: pointer;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+    text-transform: uppercase;
+    &:hover {
+      background-color: #4e0eff;
+    }
   }
-}
+  span {
+    color: white;
+    text-transform: uppercase;
+    a {
+      color: #4e0eff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  }
 `;
 
-export default Register
+export default Register;

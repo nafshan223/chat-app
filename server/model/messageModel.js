@@ -11,6 +11,10 @@ const MessageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    sentAt: {
+      type: Date,
+      default: Date.now
+    }
   },
   {
     timestamps: true,
